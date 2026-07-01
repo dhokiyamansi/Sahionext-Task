@@ -1,13 +1,9 @@
-// Thin wrapper over the browser's built-in SpeechSynthesis (Web Speech API).
-// Free, no key, works offline. Resolves when playback finishes (or is skipped).
-
 let cachedVoice: SpeechSynthesisVoice | null | undefined;
 
 function supported(): boolean {
   return typeof window !== "undefined" && "speechSynthesis" in window;
 }
 
-// Voices load asynchronously in some browsers; wait briefly for them.
 function loadVoices(): Promise<SpeechSynthesisVoice[]> {
   return new Promise((resolve) => {
     if (!supported()) return resolve([]);
@@ -28,7 +24,6 @@ function loadVoices(): Promise<SpeechSynthesisVoice[]> {
 async function pickVoice(): Promise<SpeechSynthesisVoice | null> {
   if (cachedVoice !== undefined) return cachedVoice;
   const voices = await loadVoices();
-  // Prefer a natural-sounding English voice when available.
   const preferred =
     voices.find((v) => /Google US English|Samantha|Natural|Neural/i.test(v.name)) ??
     voices.find((v) => v.lang?.startsWith("en") && v.localService === false) ??
@@ -42,7 +37,7 @@ async function pickVoice(): Promise<SpeechSynthesisVoice | null> {
 export async function speak(text: string): Promise<void> {
   if (!supported() || !text.trim()) return;
 
-  window.speechSynthesis.cancel(); // stop anything mid-flight
+  window.speechSynthesis.cancel();
   const voice = await pickVoice();
 
   return new Promise<void>((resolve) => {
@@ -60,7 +55,6 @@ export async function speak(text: string): Promise<void> {
     };
     utterance.onend = finish;
     utterance.onerror = finish;
-    // Safety net in case the engine never fires onend.
     setTimeout(finish, Math.min(8000, 1500 + text.length * 90));
 
     window.speechSynthesis.speak(utterance);

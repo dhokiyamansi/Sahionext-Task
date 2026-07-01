@@ -1,7 +1,3 @@
-// Encode a mono Float32Array (from the VAD, sample rate 16 kHz) into a
-// base64 16-bit PCM WAV string ready to POST to the server. Self-contained
-// (no library import) so it never touches SSR / bundler edge cases.
-
 export function encodeWavBase64(samples: Float32Array, sampleRate = 16000): string {
   const numChannels = 1;
   const bitDepth = 16;
@@ -21,8 +17,8 @@ export function encodeWavBase64(samples: Float32Array, sampleRate = 16000): stri
   view.setUint32(4, 36 + dataSize, true);
   writeString(8, "WAVE");
   writeString(12, "fmt ");
-  view.setUint32(16, 16, true); // PCM chunk size
-  view.setUint16(20, 1, true); // audio format = PCM
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
   view.setUint16(22, numChannels, true);
   view.setUint32(24, sampleRate, true);
   view.setUint32(28, byteRate, true);

@@ -8,8 +8,6 @@ interface Props {
   latestIds: string[];
 }
 
-// Golden-angle phyllotaxis layout — organic, even, non-overlapping spread
-// that grows outward from the organism as more keywords arrive.
 const GOLDEN_ANGLE = 2.399963229728653;
 
 export function KeywordField({ keywords, latestIds }: Props) {
@@ -20,7 +18,7 @@ export function KeywordField({ keywords, latestIds }: Props) {
           const angle = i * GOLDEN_ANGLE;
           const radius = 160 + Math.sqrt(i + 1) * 52;
           const x = Math.cos(angle) * radius;
-          const y = Math.sin(angle) * radius * 0.7; // slightly flattened field
+          const y = Math.sin(angle) * radius * 0.7;
           const size = 15 + Math.min(k.weight, 6) * 6;
           const isLatest = latestIds.includes(k.id);
 

@@ -1,5 +1,3 @@
-// Copies the VAD worklet, Silero ONNX models, and ONNX Runtime wasm/glue files
-// into public/vad so they are served same-origin (no CDN, works offline & on Vercel).
 import { existsSync, mkdirSync, copyFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -28,7 +26,6 @@ for (const f of vadFiles) {
   }
 }
 
-// ONNX Runtime single-threaded simd wasm + its JS glue (all variants, to be safe).
 if (existsSync(ortDist)) {
   for (const f of readdirSync(ortDist)) {
     if (/^ort-wasm-simd-threaded.*\.(wasm|mjs)$/.test(f)) {

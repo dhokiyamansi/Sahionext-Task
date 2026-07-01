@@ -1,15 +1,15 @@
 export type PipelineStatus =
-  | "idle" // not started
-  | "loading" // VAD model downloading / mic warming up
-  | "listening" // waiting for / capturing speech
-  | "thinking" // audio sent to Gemini, awaiting keywords
-  | "speaking" // reading the keywords aloud
+  | "idle"
+  | "loading"
+  | "listening"
+  | "thinking"
+  | "speaking"
   | "error";
 
 export interface Keyword {
   id: string;
   text: string;
-  weight: number; // how many times it has appeared this session
+  weight: number;
   createdAt: number;
 }
 

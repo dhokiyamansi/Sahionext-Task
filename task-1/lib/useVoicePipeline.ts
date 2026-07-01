@@ -14,7 +14,6 @@ export interface VoicePipeline {
   latest: string[];
   latestIds: string[];
   error: string | null;
-  /** Live mic loudness 0..~1, updated ~60fps. Read in animation loops (no re-render). */
   levelRef: React.MutableRefObject<number>;
   start: () => Promise<void>;
   stop: () => Promise<void>;
@@ -66,7 +65,6 @@ export function useVoicePipeline(): VoicePipeline {
     });
   }, []);
 
-  // rAF loop: read RMS loudness from the analyser into levelRef (smoothed).
   const startLevelLoop = useCallback(() => {
     const analyser = analyserRef.current;
     if (!analyser) return;
@@ -87,7 +85,6 @@ export function useVoicePipeline(): VoicePipeline {
 
   const handleSpeechEnd = useCallback(
     async (audio: Float32Array) => {
-      // Ignore anything captured while we're busy (e.g. TTS echo).
       if (statusRef.current === "thinking" || statusRef.current === "speaking") return;
 
       setPhase("thinking");
@@ -106,18 +103,13 @@ export function useVoicePipeline(): VoicePipeline {
           setLatest(kws);
           mergeKeywords(kws);
           setPhase("speaking");
-          // Pause the VAD so the spoken keywords don't feed back into it.
           try {
             vadRef.current?.pause();
-          } catch {
-            /* noop */
-          }
+          } catch {}
           await speak(kws.join(", "));
           try {
             await vadRef.current?.start();
-          } catch {
-            /* noop */
-          }
+          } catch {}
         }
       } catch (e) {
         console.error("[pipeline] speech handling failed:", e);
@@ -144,7 +136,6 @@ export function useVoicePipeline(): VoicePipeline {
       });
       streamRef.current = stream;
 
-      // Own AudioContext + analyser for the live loudness visualization.
       const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const ctx = new Ctor();
       audioCtxRef.current = ctx;
@@ -156,7 +147,6 @@ export function useVoicePipeline(): VoicePipeline {
       analyserRef.current = analyser;
       startLevelLoop();
 
-      // Dynamically import so onnxruntime-web never runs during SSR.
       const { MicVAD } = await import("@ricky0123/vad-web");
       const vad = await MicVAD.new({
         model: "v5",
@@ -166,7 +156,6 @@ export function useVoicePipeline(): VoicePipeline {
         startOnLoad: false,
         submitUserSpeechOnPause: false,
         ortConfig: (ort) => {
-          // Single-threaded: avoids needing cross-origin isolation (SharedArrayBuffer).
           ort.env.wasm.numThreads = 1;
         },
         positiveSpeechThreshold: 0.5,
@@ -178,9 +167,7 @@ export function useVoicePipeline(): VoicePipeline {
           if (statusRef.current === "listening") setPhase("listening");
         },
         onSpeechEnd: handleSpeechEnd,
-        onVADMisfire: () => {
-          /* too-short blip; ignore */
-        },
+        onVADMisfire: () => {},
       });
       vadRef.current = vad;
       await vad.start();
@@ -205,17 +192,13 @@ export function useVoicePipeline(): VoicePipeline {
     cancelSpeech();
     try {
       await vadRef.current?.destroy();
-    } catch {
-      /* noop */
-    }
+    } catch {}
     vadRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     try {
       await audioCtxRef.current?.close();
-    } catch {
-      /* noop */
-    }
+    } catch {}
     audioCtxRef.current = null;
     analyserRef.current = null;
     setPhase("idle");
@@ -226,7 +209,6 @@ export function useVoicePipeline(): VoicePipeline {
     setLatest([]);
   }, []);
 
-  // Clean up on unmount.
   useEffect(() => {
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);

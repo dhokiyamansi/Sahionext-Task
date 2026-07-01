@@ -35,7 +35,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ---------- stage ---------- */
 .stage {
   position: fixed;
   inset: 0;
@@ -70,7 +69,6 @@ body {
   animation: fade-in 0.8s ease both;
 }
 
-/* ---------- brand ---------- */
 .brand {
   padding: 1.6rem 2rem 0;
   z-index: 6;
@@ -107,7 +105,6 @@ body {
   letter-spacing: 0.04em;
 }
 
-/* ---------- organism canvas ---------- */
 .organism {
   position: absolute;
   inset: 0;
@@ -116,7 +113,6 @@ body {
   z-index: 1;
 }
 
-/* ---------- keyword field ---------- */
 .keyword-field {
   position: absolute;
   inset: 0;
@@ -149,7 +145,6 @@ body {
   vertical-align: super;
 }
 
-/* ---------- controls ---------- */
 .controls {
   z-index: 6;
   display: flex;
@@ -252,7 +247,6 @@ body {
 }
 .ghost-btn:hover { color: var(--ink); border-color: rgba(120, 150, 210, 0.4); }
 
-/* ---------- animations ---------- */
 @keyframes pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.55; transform: scale(0.82); }

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Run on Node (not Edge) — the SDK + larger request bodies are happiest here.
 export const runtime = "nodejs";
 export const maxDuration = 30;
 

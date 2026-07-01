@@ -8,7 +8,6 @@ interface Props {
   levelRef: React.MutableRefObject<number>;
 }
 
-// Colour identity per phase (inner glow -> outer edge).
 const PALETTE: Record<PipelineStatus, [string, string]> = {
   idle: ["#1b9ea8", "#0e5b66"],
   loading: ["#6d7bd6", "#3b3f8f"],
@@ -46,9 +45,8 @@ export function VoiceOrganism({ status, levelRef }: Props) {
     resize();
     window.addEventListener("resize", resize);
 
-    // Smoothed values so colour/energy transitions are graceful.
     let energy = 0;
-    let hueMix = 0; // eased "activity" used for extra ripple on think/speak
+    let hueMix = 0;
     const start = performance.now();
 
     const lerpColor = (a: string, b: string, t: number) => {
@@ -67,8 +65,6 @@ export function VoiceOrganism({ status, levelRef }: Props) {
       const cy = height / 2;
       const baseR = Math.min(width, height) * 0.17;
 
-      // Target energy: driven by live mic level while listening; gentle
-      // autonomous pulsing while thinking/speaking; calm when idle.
       const level = Math.min(1, levelRef.current * 4);
       let target = 0.12;
       if (phase === "listening") target = 0.12 + level * 0.9;
@@ -81,7 +77,6 @@ export function VoiceOrganism({ status, levelRef }: Props) {
       ctx.clearRect(0, 0, width, height);
       ctx.globalCompositeOperation = "lighter";
 
-      // Draw a few concentric deformed blobs for depth.
       const layers = 3;
       for (let l = 0; l < layers; l++) {
         const lf = 1 - l * 0.22;
@@ -112,7 +107,6 @@ export function VoiceOrganism({ status, levelRef }: Props) {
         ctx.fill();
       }
 
-      // Orbiting particles react to energy.
       ctx.globalAlpha = 0.9;
       ctx.shadowBlur = 12;
       const particles = 26;
