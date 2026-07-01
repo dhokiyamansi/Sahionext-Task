@@ -1,0 +1,29 @@
+{
+  "name": "keyword-organism",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "predev": "node scripts/copy-vad-assets.mjs",
+    "dev": "next dev",
+    "prebuild": "node scripts/copy-vad-assets.mjs",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "copy-assets": "node scripts/copy-vad-assets.mjs"
+  },
+  "dependencies": {
+    "@google/genai": "^2.10.0",
+    "@ricky0123/vad-web": "^0.0.30",
+    "framer-motion": "^12.42.2",
+    "next": "^16.2.9",
+    "onnxruntime-web": "^1.27.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^6.0.3"
+  }
+}

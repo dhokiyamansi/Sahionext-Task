@@ -1,0 +1,272 @@
+:root {
+  --bg: #05070d;
+  --bg-2: #0a1020;
+  --ink: #e8f1ff;
+  --muted: #7c8bb0;
+  --cyan: #3ef0e0;
+  --violet: #9b7bff;
+  --magenta: #ff7ac6;
+  --line: rgba(120, 150, 210, 0.14);
+  --glass: rgba(14, 20, 38, 0.55);
+
+  --font-ui: "Space Grotesk", system-ui, -apple-system, sans-serif;
+  --font-display: "Syne", var(--font-ui);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(1200px 800px at 50% 18%, #0d1730 0%, transparent 60%),
+    radial-gradient(900px 700px at 85% 90%, #17123a 0%, transparent 55%),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- stage ---------- */
+.stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  isolation: isolate;
+}
+
+.stage__vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.65) 100%);
+  z-index: 5;
+}
+
+.stage__scene {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+}
+
+.stage__hint {
+  position: absolute;
+  bottom: 8%;
+  color: var(--muted);
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  text-align: center;
+  padding: 0 1.5rem;
+  animation: fade-in 0.8s ease both;
+}
+
+/* ---------- brand ---------- */
+.brand {
+  padding: 1.6rem 2rem 0;
+  z-index: 6;
+}
+
+.brand__mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.35rem;
+  letter-spacing: 0.01em;
+  text-transform: lowercase;
+  background: linear-gradient(90deg, var(--cyan), var(--violet) 55%, var(--magenta));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.brand__pulse {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 14px 2px var(--cyan);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+
+.brand__tag {
+  margin-top: 0.35rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- organism canvas ---------- */
+.organism {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* ---------- keyword field ---------- */
+.keyword-field {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.keyword {
+  position: absolute;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  text-shadow: 0 0 18px rgba(62, 240, 224, 0.25);
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.keyword--latest {
+  color: #fff;
+  text-shadow: 0 0 22px rgba(255, 122, 198, 0.75), 0 0 40px rgba(155, 123, 255, 0.4);
+}
+
+.keyword__count {
+  font-size: 0.55em;
+  color: var(--cyan);
+  margin-left: 0.15em;
+  vertical-align: super;
+}
+
+/* ---------- controls ---------- */
+.controls {
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1.2rem 1rem 2.2rem;
+}
+
+.controls__latest {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 90vw;
+}
+
+.controls__latest-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+}
+
+.chip {
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--glass);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(8px);
+}
+
+.controls__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: background 0.3s;
+}
+.dot--listening { background: var(--cyan); box-shadow: 0 0 10px var(--cyan); animation: pulse 1.4s infinite; }
+.dot--thinking { background: var(--violet); box-shadow: 0 0 10px var(--violet); animation: pulse 1s infinite; }
+.dot--speaking { background: var(--magenta); box-shadow: 0 0 10px var(--magenta); animation: pulse 0.7s infinite; }
+.dot--loading { background: var(--violet); animation: pulse 1.2s infinite; }
+.dot--error { background: #ff6b6b; box-shadow: 0 0 10px #ff6b6b; }
+
+.controls__buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mic-btn {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  color: #061016;
+  padding: 0.85rem 2.4rem;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  background: linear-gradient(90deg, var(--cyan), #6fe9ff);
+  box-shadow: 0 0 28px rgba(62, 240, 224, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.25s ease, filter 0.2s;
+}
+.mic-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.05); }
+.mic-btn:active:not(:disabled) { transform: translateY(1px); }
+.mic-btn:disabled { opacity: 0.6; cursor: default; }
+
+.mic-btn--active {
+  color: var(--ink);
+  background: rgba(255, 122, 198, 0.12);
+  border: 1px solid rgba(255, 122, 198, 0.5);
+  box-shadow: 0 0 26px rgba(255, 122, 198, 0.25);
+}
+
+.ghost-btn {
+  font-family: var(--font-ui);
+  font-size: 0.86rem;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.7rem 1.3rem;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.ghost-btn:hover { color: var(--ink); border-color: rgba(120, 150, 210, 0.4); }
+
+/* ---------- animations ---------- */
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.82); }
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+  .brand { padding: 1.1rem 1.3rem 0; }
+  .mic-btn { padding: 0.8rem 2rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand__pulse, .dot { animation: none; }
+}
