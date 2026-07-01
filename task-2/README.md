@@ -3,134 +3,125 @@
 > **Question:** How would you design a simple, good-looking talking avatar?
 > *(Approach only — no code.)*
 
-## 1. Framing the problem
+---
 
-A "talking avatar" is a visual character that appears to **speak** given some text
-or audio. "Simple" and "good-looking" pull in slightly different directions, so the
-core design principle I'd commit to is:
+## The approach in one line
 
-> **Stylized, not realistic.** A clean, characterful design that is deliberately
-> non-photoreal avoids the *uncanny valley*, is far cheaper to build, and reads as
-> intentional and polished. Realistic 3D faces look wrong the moment lip-sync is
-> slightly off; a stylized face stays charming even when the sync is approximate.
+Build a **stylized, real-time rigged 3D avatar** that runs entirely in the browser: a
+3D head with facial **blendshapes**, driven by **visemes** (mouth shapes) synced to
+text-to-speech, with always-on idle motion (blink, breathe, sway) so it feels alive.
 
-So the goal becomes: **a small set of well-crafted mouth shapes + expressive
-secondary motion, driven by speech timing, on an appealing character.**
+## 1. Why real-time rigged 3D (and why stylized)
 
-## 2. What actually makes it "talk" — the four layers
+- **Rigged 3D, not AI-generated video** (SadTalker/D-ID/HeyGen): generated video is
+  cloud-bound, costs money, adds latency, and risks the *uncanny valley*. A rigged 3D
+  head runs live in the browser at 30–60 FPS, is free, and is fully controllable.
+- **Stylized, not photorealistic**: a clean, characterful (non-realistic) look sidesteps
+  the uncanny valley and stays appealing even when lip-sync is only approximate. A
+  realistic face looks wrong the instant sync is a few ms off.
 
-A convincing talking avatar is the sum of four layers, in order of importance:
+## 2. How the mouth moves — blendshapes + visemes
 
-1. **Lip-sync (mouth shapes)** — the mouth must move in time with the audio. This is
-   the single most important cue; get this ~80% right and the brain accepts it.
-2. **Idle / secondary motion** — blinking, subtle head sway, breathing. A perfectly
-   still face reads as "frozen/dead" even while the mouth moves. Constant micro-motion
-   is what sells "alive."
-3. **Expression / emotion** — eyebrows and eye shape mapped to sentiment (neutral,
-   happy, thinking). Optional but hugely raises perceived quality.
-4. **Gaze** — eyes tracking the user / cursor, occasional look-away. Cheap, big impact.
+A 3D avatar face is animated with **blendshapes** (morph targets): named sliders like
+"jaw open," "mouth pucker," "smile" that deform the mesh. The standard rig exposes
+**ARKit / Oculus viseme blendshapes**.
 
-## 3. Recommended approach: 2D layered / "puppet" avatar
+Speech only needs a small set of **visemes** (visual phonemes / mouth shapes) — in
+practice **8–12** shapes (rest/closed, `AA` open, `E`, `O`, `U`, `M/B/P` lips-together,
+`F/V` teeth-on-lip, `L`, `WQ`, …). "Talking" is just blending the right viseme blendshape
+in at the right time, with smooth transitions between them.
 
-For *simple + good-looking*, I'd choose a **2D vector/layered character** over 3D:
+## 3. Where the timing comes from
 
-| Approach | Pros | Cons | Verdict |
-| --- | --- | --- | --- |
-| **2D layered (SVG/sprites)** | Easy, tiny, artist-friendly, always on-model, fast | Limited head turns | ✅ **Best for "simple + good-looking"** |
-| Live2D / Rive | Rigged 2D with smooth deformation, very polished | Needs the tool + a rig | ✅ Great if a rig is available |
-| 3D (Three.js + morph targets / Ready Player Me) | Full head rotation, depth | Heavier, uncanny risk, more assets | Use only if 3D/AR is a requirement |
+The avatar needs to know **which viseme, when**. Options, all browser-friendly:
 
-**The 2D "puppet" model:** the character is drawn as separate layers — head, eyes,
-pupils, eyelids, eyebrows, and a **mouth that swaps between a handful of shapes**.
-Animation = swapping the mouth layer and nudging/rotating the other layers.
-
-### The mouth: visemes
-
-Human speech only needs a small set of mouth shapes called **visemes** (visual
-phonemes). A classic, sufficient set is ~**8–12 shapes** (e.g. the Preston Blair
-set): rest/closed, `A/I` (open), `E`, `O`, `U`, `M/B/P` (lips together), `F/V`
-(teeth on lip), `L`, `WQ`, etc. You draw these once; talking is just showing the
-right one at the right time.
-
-## 4. Driving the mouth — two levels of fidelity
-
-**Level 1 — Amplitude-driven (simplest, looks good enough):**
-Analyze the speech audio's loudness in real time (Web Audio `AnalyserNode` → RMS).
-Map volume to mouth openness: quiet → closed, loud → open, with 2–3 intermediate
-shapes. No phoneme knowledge needed. This is the fastest path and already reads as
-"talking." *(This is exactly the live-amplitude technique used in Task 1's organism.)*
-
-**Level 2 — Viseme-driven (higher quality):**
-Get **phoneme + timing** data and map each phoneme to its viseme on a timeline:
-- Many TTS engines return timing metadata — e.g. the Web Speech API's
-  `SpeechSynthesisUtterance` fires **`boundary` events** per word, and cloud TTS
-  (Azure, Amazon Polly, ElevenLabs) can return **viseme/speech marks** with millisecond
-  timestamps.
-- Play the audio and, on each timestamp, switch to the matching mouth shape.
-- Smooth transitions (blend/tween between shapes) so it doesn't look robotic.
-
-I'd ship **Level 1 for the MVP**, then upgrade the mouth to **Level 2** if a TTS with
-viseme output is available.
-
-## 5. The pipeline
-
-```
-text ──► TTS engine ──► audio + timing (visemes / word boundaries / amplitude)
-                               │
-                               ├─► audio playback  ────────────► 🔊 voice
-                               └─► timeline driver
-                                        │
-             ┌──────────────────────────┼───────────────────────────┐
-             ▼                          ▼                            ▼
-        mouth shape                 expression                  idle motion
-      (viseme swap)          (eyebrows/eyes by sentiment)   (blink, sway, breathe)
-             └──────────────────────────┴───────────────────────────┘
-                                        ▼
-                                  render (2D layers)
-```
-
-A single animation loop (`requestAnimationFrame`) reads the current audio time,
-picks the active viseme, applies eased transitions, and runs the always-on idle
-motion (a blink every few seconds, a slow sinusoidal head bob, gentle breathing scale).
-
-## 6. Making it *good-looking* (the design details that matter)
-
-- **Character design first.** A friendly, simple, on-brand face with a limited, tasteful
-  color palette beats any amount of animation tech. Rounded forms read as approachable.
-- **Never fully still.** Idle blink + micro head-motion + breathing is what separates
-  "alive" from "creepy mannequin."
-- **Ease everything.** Snap-swapping mouth shapes looks robotic; blend between them and
-  slightly overshoot (spring) for life.
-- **Anticipation & rest pose.** Return to a neutral, slightly-smiling rest pose between
-  utterances; a tiny lead-in before speech starts.
-- **Eyes and gaze.** Eyes that occasionally saccade and track the user create a strong
-  sense of attention and presence.
-- **A little glow / soft shadow / depth** to lift it off the background, plus a subtle
-  reactive backdrop, gives a premium feel without extra complexity.
-- **Sync tolerance.** Keep audio and mouth within ~100 ms; beyond that the illusion breaks.
-
-## 7. Suggested stack
-
-- **Rendering:** SVG or Canvas for a layered 2D avatar (or **Rive/Live2D** if a rig is
-  available; **Three.js + morph targets / Ready Player Me** only if 3D is required).
-- **Voice:** browser **Web Speech API** for a zero-cost MVP; **Azure / Polly / ElevenLabs**
-  when you want natural voices *and* viseme timing.
-- **Timing/animation:** Web Audio `AnalyserNode` (amplitude) or TTS viseme marks, driven
-  in a `requestAnimationFrame` loop; a spring/tween library for smoothing.
-
-## 8. MVP vs. polished
-
-| | MVP (a day) | Polished |
+| Source | Gives you | Cost |
 | --- | --- | --- |
-| Mouth | 3–4 amplitude-based shapes | 8–12 visemes with blending |
+| **HeadTTS (Kokoro)** | **Free, in-browser** neural TTS returning **visemes + phoneme timestamps** (WebGPU/WASM) | Free |
+| **Audio-driven detection** (HeadAudio / wawa-lipsync) | Visemes derived from *any* audio in real time — no text/timing needed | Free |
+| **Azure Neural TTS** | Visemes + timestamps out-of-the-box (`VisemeReceived` event) | Paid |
+| **ElevenLabs** | Character-level timestamps (derive visemes) | Paid |
+
+**Key point:** no paid API is required — **HeadTTS/Kokoro** produces visemes for free in
+the browser, and audio-driven detection can lip-sync any audio with no timing data at all.
+
+## 4. The four layers that make it feel *alive*
+
+Lip-sync alone isn't enough. In priority order:
+
+1. **Lip-sync** — mouth in time with audio. The dominant cue; get it ~80% right and the brain accepts it.
+2. **Idle / secondary motion** — **blinking, subtle head sway, breathing.** A perfectly
+   still face reads as frozen/creepy even while the mouth moves. Constant micro-motion sells "alive."
+3. **Expression** — eyebrows/eye-shape blendshapes mapped to sentiment (neutral, happy, thinking).
+4. **Gaze** — eyes that track the user and occasionally look away. Cheap, big presence boost.
+
+## 5. Reference pipeline
+
+```
+text ──► TTS ──► audio + viseme timeline (or audio-driven detection)
+                        │
+                        ├─► audio playback ─────────────► 🔊 voice
+                        └─► timeline driver
+                                   │
+          ┌────────────────────────┼─────────────────────────┐
+          ▼                        ▼                          ▼
+   viseme blendshape          expression                 idle motion
+   (jaw/lips morph)     (eyebrow/eye blendshapes)    (blink, sway, breathe)
+          └────────────────────────┴─────────────────────────┘
+                                   ▼
+                      Three.js / WebGL render (30–60 FPS)
+```
+
+A single `requestAnimationFrame` loop reads the current audio time, blends in the active
+viseme, applies expression, and always runs the idle motion.
+
+## 6. What makes it *good-looking* (the details)
+
+- **Character design first.** A friendly, on-brand face with a limited, tasteful palette
+  beats any amount of animation tech. Rounded forms read as approachable.
+- **Never fully still** — idle blink + micro head-motion + breathing separates "alive" from "mannequin."
+- **Ease/blend everything** — snapping between visemes looks robotic; tween and slightly overshoot (spring) for life.
+- **Rest pose & anticipation** — return to a neutral, slightly-smiling pose between utterances; a tiny lead-in before speech.
+- **Gaze & saccades** — occasional eye movement + user tracking = strong sense of attention.
+- **Lighting & soft shadow** — good 3-point-ish lighting and a simple backdrop lift the character and give a premium feel cheaply.
+- **Sync tolerance** — keep audio and mouth within ~100 ms; beyond that the illusion breaks.
+
+## 7. Recommended concrete stack
+
+- **Avatar model:** a **Ready Player Me** 3D head (free, customizable, ships with ARKit/Oculus
+  viseme blendshapes) exported as **GLB**.
+- **Engine:** **[`met4citizen/TalkingHead`](https://github.com/met4citizen/TalkingHead)** —
+  a Three.js class that loads the GLB and does real-time, in-browser lip-sync at 30–60 FPS,
+  with built-in idle motion, expressions, and gaze.
+- **Voice + timing:** **[HeadTTS](https://github.com/met4citizen/HeadTTS)** (Kokoro) for
+  free in-browser visemes + timestamps — upgrade to Azure/ElevenLabs only if a specific
+  voice is required.
+
+This gives an impressive, good-looking 3D talking avatar, real-time, **with no paid API keys**.
+
+## 8. Simple vs. polished (scope ladder)
+
+| | MVP | Polished |
+| --- | --- | --- |
+| Mouth | 3–4 visemes (or audio-amplitude → jaw) | 8–12 blended visemes |
 | Motion | blink + head bob | + breathing, gaze tracking, anticipation |
-| Expression | neutral only | sentiment-mapped eyebrows/eyes |
-| Voice | Web Speech API | neural TTS with viseme timing |
+| Expression | neutral only | sentiment-mapped brows/eyes |
+| Voice | free in-browser Kokoro / Web Speech API | neural TTS (Azure / ElevenLabs) |
+| Model | one Ready Player Me head | custom-styled model, better lighting |
 
-## 9. Tie-in with Task 1
+## 9. Summary
 
-Task 1 already implements the hard half of an avatar pipeline: **mic/audio →
-live-amplitude analysis → a face-like reactive visual (the organism) → synced speech
-playback.** Turning that into a talking avatar is mostly **swapping the abstract blob
-for a layered character and mapping the same live-amplitude signal to viseme mouth
-shapes** — the plumbing (audio capture, level analysis, TTS, render loop) is the same.
+Design a **stylized real-time 3D head** (e.g. Ready Player Me GLB) rendered in **Three.js**,
+animate the mouth by blending **8–12 viseme blendshapes** on a timeline from a TTS that
+provides viseme timing (**free in-browser Kokoro/HeadTTS**, or audio-driven detection), and
+spend the real effort on **character design + always-on idle motion (blink, breathe, sway) +
+gaze + eased transitions**. That combination — not photorealism — is what makes a talking
+avatar look simple, alive, and good.
+
+## Sources
+
+- [met4citizen/TalkingHead — real-time 3D lip-sync in the browser](https://github.com/met4citizen/TalkingHead)
+- [met4citizen/HeadTTS — free in-browser neural TTS (Kokoro) with visemes + timestamps](https://github.com/met4citizen/HeadTTS)
+- [Ready Player Me — 3D avatars with ARKit/Oculus blendshapes](https://readyplayer.me/)
+- [Azure Neural TTS — lip-sync with viseme events](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/azure-neural-text-to-speech-extended-to-support-lip-sync-with-viseme/2356748)
+- [ElevenLabs — speech with character-level timestamps](https://elevenlabs.io/docs/api-reference/text-to-speech/convert-with-timestamps)

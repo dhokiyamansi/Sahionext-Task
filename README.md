@@ -1,10 +1,8 @@
-# Sahionext — 
-
 This repository contains two tasks.
 
 ## Task 1 — Real-time Voice → Keywords experience  → [`task-1/`](./task-1)
 
-**Problem statement:**
+**Question:**
 > Implement basic VAD, send non-silent chunks to any model that supports audio, get keywords, play the returned keywords, and show the keywords in a nice way (be as creative as you want).
 
 **What's built:** a Next.js app called **echobloom**. The browser runs on-device
